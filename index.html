@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Violet Day</title>
+    
+    <!-- PWA & iOS Meta Tags -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#7c3aed" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#1e1b4b" media="(prefers-color-scheme: dark)">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Violet Day">
+    <link rel="apple-touch-icon" href="assets/icon-192.png">
+
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app" class="app-container">
+        <!-- Шапка приложения -->
+        <header class="app-header">
+            <div class="user-greeting">
+                <h1 id="greeting-title">Добрый вечер</h1>
+                <p id="greeting-subtitle">Календарь привычек</p>
+            </div>
+            <button class="icon-btn settings-trigger" aria-label="Настройки" onclick="App.openScreen('settings')">
+                <span>⚙️</span>
+            </button>
+        </header>
+
+        <!-- Основной контент (Вкладки) -->
+        <main class="app-content">
+            <!-- ЭКРАН 1: КАЛЕНДАРЬ -->
+            <section id="screen-calendar" class="screen active">
+                <div class="calendar-card glass-card">
+                    <div class="calendar-nav">
+                        <button class="nav-arrow" onclick="Calendar.changeMonth(-1)" aria-label="Прошлый месяц">‹</button>
+                        <h2 id="current-month-year">Март 2026</h2>
+                        <button class="nav-arrow" onclick="Calendar.changeMonth(1)" aria-label="Следующий месяц">›</button>
+                    </div>
+                    <div class="weekdays-grid">
+                        <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span>
+                    </div>
+                    <div id="calendar-grid" class="days-grid"></div>
+                </div>
+
+                <div class="day-details-container">
+                    <div class="day-details-header">
+                        <h3 id="selected-date-title">Сегодня</h3>
+                        <button class="text-btn" onclick="Modal.openRecordModal()">+ Добавить</button>
+                    </div>
+                    <div id="day-records-list" class="records-list">
+                        <!-- Динамический список записей -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- ЭКРАН 2: МОИ ЗНАЧКИ И ШАБЛОНЫ -->
+            <section id="screen-badges" class="screen">
+                <div class="section-top">
+                    <h2>Мои шаблоны</h2>
+                    <button class="primary-btn-sm" onclick="Modal.openTemplateModal()">+ Создать</button>
+                </div>
+                <div class="filter-chips">
+                    <button class="chip active" onclick="Badges.filterCategory('all', this)">Все</button>
+                    <button class="chip" onclick="Badges.filterCategory('health', this)">Здоровье</button>
+                    <button class="chip" onclick="Badges.filterCategory('money', this)">Деньги</button>
+                    <button class="chip" onclick="Badges.filterCategory('sport', this)">Движение</button>
+                    <button class="chip" onclick="Badges.filterCategory('life', this)">Личное</button>
+                </div>
+                <div class="templates-section-title">⭐ Избранное для быстрого добавления</div>
+                <div id="favorite-templates-grid" class="templates-grid"></div>
+
+                <div class="templates-section-title" style="margin-top: 20px;">Все шаблоны</div>
+                <div id="all-templates-grid" class="templates-grid"></div>
+            </section>
+
+            <!-- ЭКРАН 3: СТАТИСТИКА -->
+            <section id="screen-stats" class="screen">
+                <h2>Статистика месяца</h2>
+                <div class="stats-overview glass-card">
+                    <div class="stat-box">
+                        <span class="stat-number" id="stat-total-records">0</span>
+                        <span class="stat-label">Всего отметок</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-number" id="stat-streak">0 дней</span>
+                        <span class="stat-label">Текущая серия</span>
+                    </div>
+                </div>
+
+                <h3 style="margin-top: 20px; font-size: 17px;">Частота привычек</h3>
+                <div id="habits-frequency-list" class="frequency-list"></div>
+            </section>
+
+            <!-- ЭКРАН 4: НАСТРОЙКИ -->
+            <section id="screen-settings" class="screen">
+                <h2>Настройки</h2>
+                <div class="settings-group glass-card">
+                    <div class="setting-item">
+                        <span>Тёмная тема</span>
+                        <label class="switch">
+                            <input type="checkbox" id="dark-theme-toggle" onchange="Settings.toggleTheme(this)">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="settings-group glass-card">
+                    <div class="setting-item clickable" onclick="Settings.exportData()">
+                        <span>📥 Экспорт данных в JSON</span>
+                        <span>›</span>
+                    </div>
+                    <div class="setting-item clickable" onclick="Settings.triggerImport()">
+                        <span>📤 Импорт данных из JSON</span>
+                        <span>›</span>
+                    </div>
+                    <input type="file" id="import-file-input" style="display:none" accept=".json" onchange="Settings.importData(event)">
+                </div>
+
+                <div class="settings-group glass-card">
+                    <div class="setting-item clickable text-danger" onclick="Settings.resetData()">
+                        <span>🗑️ Сбросить все данные</span>
+                    </div>
+                </div>
+
+                <div class="settings-group glass-card pwa-guide">
+                    <h3>📱 Установка на iPhone</h3>
+                    <ol>
+                        - Откройте этот сайт в браузере **Safari**.
+                        - Нажмите кнопку **«Поделиться»** ⎋ внизу экрана.
+                        - Прокрутите меню и выберите **«На экран “Домой”»** ➕.
+                        - Нажмите **«Добавить»** в правом верхнем углу.
+                    </ol>
+                </div>
+            </section>
+        </main>
+
+        <!-- Нижняя навигация -->
+        <nav class="app-nav">
+            <button class="nav-item active" onclick="App.switchTab('calendar', this)">
+                <span class="nav-icon">📅</span>
+                <span class="nav-label">Календарь</span>
+            </button>
+            <button class="nav-item" onclick="App.switchTab('badges', this)">
+                <span class="nav-icon">⭐</span>
+                <span class="nav-label">Значки</span>
+            </button>
+            <button class="nav-item" onclick="App.switchTab('stats', this)">
+                <span class="nav-icon">📊</span>
+                <span class="nav-label">Статистика</span>
+            </button>
+            <button class="nav-item" onclick="App.switchTab('settings', this)">
+                <span class="nav-icon">⚙️</span>
+                <span class="nav-label">Настройки</span>
+            </button>
+        </nav>
+
+        <!-- ПЛАВАЮЩАЯ КНОПКА ДОБАВЛЕНИЯ -->
+        <button class="fab-btn" onclick="Modal.openRecordModal()" aria-label="Добавить запись">
+            <span>+</span>
+        </button>
+
+        <!-- МОДАЛЬНОЕ ОКНО: ДОБАВЛЕНИЕ ЗАПИСИ (BOTTOM SHEET) -->
+        <div id="record-modal" class="bottom-sheet-overlay" onclick="Modal.closeOnBackdrop(event, 'record-modal')">
+            <div class="bottom-sheet glass-card">
+                <div class="sheet-handle"></div>
+                <div class="sheet-header">
+                    <h3>Новая запись</h3>
+                    <button class="close-btn" onclick="Modal.closeRecordModal()">✕</button>
+                </div>
+                <div class="sheet-body">
+                    <div class="form-group">
+                        <label>Дата</label>
+                        <input type="date" id="record-date-input" class="input-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Категория</label>
+                        <div class="category-chips-scroll" id="record-categories-scroll">
+                            <button type="button" class="cat-chip active" data-cat="health" onclick="Modal.selectCategory('health', this)">💊 Здоровье</button>
+                            <button type="button" class="cat-chip" data-cat="sport" onclick="Modal.selectCategory('sport', this)">🏋️ Движение</button>
+                            <button type="button" class="cat-chip" data-cat="money" onclick="Modal.selectCategory('money', this)">💰 Деньги</button>
+                            <button type="button" class="cat-chip" data-cat="work" onclick="Modal.selectCategory('work', this)">💻 Работа</button>
+                            <button type="button" class="cat-chip" data-cat="life" onclick="Modal.selectCategory('life', this)">🎉 Личное</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Быстрый выбор из шаблонов</label>
+                        <div id="modal-quick-templates" class="quick-templates-scroll"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Иконка и Название</label>
+                        <div class="icon-title-row">
+                            <input type="text" id="record-icon-input" class="input-control icon-input" value="💊">
+                            <input type="text" id="record-title-input" class="input-control" placeholder="Например: Магний">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Заметка (необязательно)</label>
+                        <input type="text" id="record-note-input" class="input-control" placeholder="Дополнительные детали...">
+                    </div>
+
+                    <button class="primary-btn" onclick="Modal.saveRecord()">Сохранить запись</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- МОДАЛЬНОЕ ОКНО: СОЗДАНИЕ ШАБЛОНА -->
+        <div id="template-modal" class="bottom-sheet-overlay" onclick="Modal.closeOnBackdrop(event, 'template-modal')">
+            <div class="bottom-sheet glass-card">
+                <div class="sheet-handle"></div>
+                <div class="sheet-header">
+                    <h3>Новый шаблон значка</h3>
+                    <button class="close-btn" onclick="Modal.closeTemplateModal()">✕</button>
+                </div>
+                <div class="sheet-body">
+                    <div class="form-group">
+                        <label>Название шаблона</label>
+                        <input type="text" id="tpl-title-input" class="input-control" placeholder="Например: Йога">
+                    </div>
+                    <div class="form-group">
+                        <label>Иконка (Emoji)</label>
+                        <input type="text" id="tpl-icon-input" class="input-control icon-input" value="🧘">
+                    </div>
+                    <div class="form-group">
+                        <label>Категория</label>
+                        <select id="tpl-category-input" class="input-control">
+                            <option value="health">Здоровье / Лекарства</option>
+                            <option value="sport">Движение / Спорт</option>
+                            <option value="money">Деньги / Финансы</option>
+                            <option value="work">Работа / Учёба</option>
+                            <option value="life">Личное / События</option>
+                        </select>
+                    </div>
+                    <div class="form-group checkbox-row">
+                        <label for="tpl-favorite-input">Добавить в избранное</label>
+                        <input type="checkbox" id="tpl-favorite-input">
+                    </div>
+                    <button class="primary-btn" onclick="Modal.saveTemplate()">Сохранить шаблон</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Скрипты приложения -->
+    <script src="app.js"></script>
+    <script>
+        // Инициализация PWA Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registration failed:', err));
+            });
+        }
+    </script>
+</body>
+</html>
